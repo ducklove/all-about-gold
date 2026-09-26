@@ -9,4 +9,6 @@ UMask=0077
 WorkingDirectory=%h/Works/all-about-gold
 EnvironmentFile=%h/.config/all-about-gold/publish.env
 ExecStart=/usr/bin/python3 %h/Works/all-about-gold/ops/update_pages.py
+StandardOutput=append:%h/.config/all-about-gold/publish.log
+StandardError=inherit
 TimeoutStartSec=20min

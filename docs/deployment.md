@@ -31,6 +31,8 @@ systemctl --user start all-about-gold-update.service
 ```sh
 systemctl --user list-timers all-about-gold-update.timer
 systemctl --user status all-about-gold-update.service
+tail -50 ~/.config/all-about-gold/publish.log
+# 시스템 journal이 활성화되어 있다면:
 journalctl --user -u all-about-gold-update.service -n 50 --no-pager
 # 수집/발행을 다시 시도
 systemctl --user start all-about-gold-update.service
@@ -38,7 +40,7 @@ systemctl --user start all-about-gold-update.service
 
 GitHub의 **Deploy GitHub Pages** 워크플로가 성공해야 공개본 갱신이 완료됩니다. `data/current.json`의 `provider`가 `finance-pi`인지, `publishedAt`이 새 발행 시각인지, `history.assets[].points`의 마지막 월이 원천 발표와 맞는지 확인합니다. 코드를 바꿔 배포하려면 main에 push합니다. 데이터가 그대로인 상태에서 재배포만 하려면 Actions의 Run workflow를 사용합니다.
 
-Pi 수집 실패는 systemd 실패 상태와 journal에 남고 기존 데이터 브랜치·Pages는 유지됩니다. Pages 빌드 실패는 Actions에 남고 직전 성공 배포가 유지됩니다. 3일 넘게 발행되지 않으면 화면에서도 갱신 상태를 확인하라는 안내를 표시합니다. 별도의 메신저 알림은 설정하지 않습니다.
+Pi 수집 실패는 systemd 실패 상태와 전용 publish.log에 남고 기존 데이터 브랜치·Pages는 유지됩니다. Pages 빌드 실패는 Actions에 남고 직전 성공 배포가 유지됩니다. 3일 넘게 발행되지 않으면 화면에서도 갱신 상태를 확인하라는 안내를 표시합니다. 별도의 메신저 알림은 설정하지 않습니다.
 
 ## 유지보수
 
