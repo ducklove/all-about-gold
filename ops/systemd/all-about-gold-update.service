@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh gold research in finance-pi and publish to GitHub Pages
+Wants=network-online.target
+After=network-online.target finance-pi-admin.service
+
+[Service]
+Type=oneshot
+UMask=0077
+WorkingDirectory=%h/Works/all-about-gold
+EnvironmentFile=%h/.config/all-about-gold/publish.env
+ExecStart=/usr/bin/python3 %h/Works/all-about-gold/ops/update_pages.py
+TimeoutStartSec=20min

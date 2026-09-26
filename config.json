@@ -1,0 +1,13 @@
+{
+  "projectKey": "allAboutGold",
+  "name": "All About Gold",
+  "entrypoint": "index.html",
+  "themeParameter": "theme",
+  "embedParameter": "embed",
+  "dataApi": "/api/gold",
+  "dataProvider": "finance-pi",
+  "financePiEndpoint": "/api/research/gold",
+  "baseUrl": "https://ducklove.github.io/all-about-gold",
+  "hubUrl": "https://ducklove.duckdns.org:3691/",
+  "publishedDataUrl": "https://ducklove.github.io/all-about-gold/data/current.json"
+}

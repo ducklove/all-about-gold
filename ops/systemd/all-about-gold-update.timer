@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for updated gold research every day at 07:17 Asia/Seoul
+
+[Timer]
+OnCalendar=*-*-* 07:17:00 Asia/Seoul
+Persistent=true
+Unit=all-about-gold-update.service
+
+[Install]
+WantedBy=timers.target
