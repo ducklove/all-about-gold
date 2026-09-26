@@ -30,7 +30,7 @@
   }
   series.forEach(s=>{
    let segment=[],last=null;
-   const flush=()=>{if(segment.length)svg+=`<polyline data-series="${esc(s.id||s.name)}" points="${segment.join(' ')}" fill="none" stroke="${s.color}" stroke-width="${s.id==='gold'?2.6:2}" stroke-linejoin="round"/>`;segment=[];};
+   const flush=()=>{if(segment.length)svg+=`<polyline data-series="${esc(s.id||s.name)}" points="${segment.join(' ')}" fill="none" stroke="${s.color}" stroke-width="${s.id==='gold'?2.6:2}" stroke-linejoin="round"${s.dashed?' stroke-dasharray="6 3"':''}/>`;segment=[];};
    s.points.forEach(p=>{
     if(!Number.isFinite(p.value)||(options.log&&p.value<=0)){flush();last=null;return;}
     if(last&&monthNumber(p.date)-monthNumber(last)>(options.annual?12:1))flush();

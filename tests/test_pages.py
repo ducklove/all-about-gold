@@ -14,6 +14,7 @@ def fixture():
     return {
         'schemaVersion': 1, 'provider': 'finance-pi',
         'publishedAt': '2026-09-26T00:27:46+00:00',
+        'marketSize': json.loads((ROOT / 'data/market_size.json').read_text()),
         **{key: json.loads((ROOT / 'data' / (key + '.json')).read_text())
            for key in ('history', 'trends', 'research')},
     }
@@ -39,6 +40,9 @@ class PagesTests(unittest.TestCase):
         valid = fixture()
         for mutate in (
             lambda s: s.update(provider='other'),
+            lambda s: s.pop('marketSize'),
+            lambda s: s['marketSize']['goldDebtRatioPct'][-1].update(value=9999),
+            lambda s: s['marketSize']['marketCap'][-1].update(value=1),
             lambda s: s['history']['assets'].pop(),
             lambda s: s['trends']['reserves'].pop(),
             lambda s: s['history']['assets'][0]['points'][0].update(value=float('nan')),

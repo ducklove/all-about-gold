@@ -68,6 +68,9 @@ FINANCE_PI_BASE_URL=http://192.168.68.84:8400 npm start
 | 달러 지수 | 1971-01–2026-08 | Yahoo DXY 일별 종가의 월평균 |
 | 비트코인 | 2014-10–2026-08 | Yahoo BTC-USD 일별 종가의 월평균 |
 | 달러/원 | 2003-12–2026-08 | Yahoo KRW=X 일별 종가의 월평균 |
+| 금 추정 시가총액 | 1960–2025 | 재구성 재고 × 12월 월평균 금 가격 |
+| 미 연방 총부채·금/부채 비율 | 1993–2025 | 미 재무부 연말 액면 잔액, 정부 내부 보유 포함 |
+| 전체 금 수량·채굴량/재고 | 1900–2025 | WGC 2025년 말 기준량에서 USGS 채굴량을 역산한 추정 |
 | 세계·미국 채굴량 | 1900–2022 | USGS DS140 연간 톤, 2022 판 |
 | 6개국 공식 금 보유량 | 1950–2024, 중국 1977–2024 | IMF IFS 연말 중량, DBnomics 배포본 |
 | 공급·국가별 채굴·최근 보유량·ETF | 자료별 기준일 표시 | 공식 발표를 검토한 수동 스냅샷 |
@@ -85,7 +88,9 @@ FINANCE_PI_BASE_URL=http://192.168.68.84:8400 npm start
 
 진행 중인 달과 원천의 첫 불완전 월을 제외하고 관측 누락을 보간하지 않습니다. 다른 시작일의 변동률은 동일 기간 성과로 비교할 수 없습니다. 최대 낙폭은 월평균 관측값 기준이므로 일별 낙폭과 다릅니다. 비율은 두 월평균을 나눈 값으로 실제 하루의 교환가격과 다릅니다.
 
-IMF 보유량의 단위는 **백만 순금 트로이온스**이며 `31.1034768`을 곱해 톤으로 변환합니다. 연말 금 중량에는 금 예치·스왑 등이 포함될 수 있습니다. USGS의 장기 채굴량과 WGC·최신 USGS 발표는 추정 방식과 개정 시점이 달라 하나의 시계열로 이어 붙이지 않습니다.
+IMF 보유량의 단위는 **백만 순금 트로이온스**이며 `31.1034768`을 곱해 톤으로 변환합니다. 연말 금 중량에는 금 예치·스왑 등이 포함될 수 있습니다. USGS의 장기 채굴량과 WGC·최신 USGS 발표는 추정 방식과 개정 시점이 달라 기존 DS140 관측 차트에서는 이어 붙이지 않습니다. 별도의 전체 수량 추정 모델에서는 아래와 같이 판본을 명시해 사용합니다.
+
+금 전체 수량은 WGC의 2025년 말 219,891t을 기준으로 이후 연도 채굴량을 빼서 과거를 역산합니다. USGS DS140(1900–2022), MCS 2025(2023), MCS 2026(2024–2025)을 사용하며 영구 손실은 0으로 가정합니다. 재활용은 신규 금에 포함하지 않습니다. 이는 WGC의 과거 관측 시계열이 아닙니다. 금 추정 시가총액은 연말 재구성 재고 × 1,000,000 / 31.1034768 × 세계은행 12월 월평균 가격입니다. 실제 연말 종가 기준 가치와 다릅니다. 미국 부채는 Treasury Debt to the Penny의 12월 마지막 관측일 잔액이며 시장가치가 아닙니다. 금/부채는 전 세계 금 가치와 미국 부채의 비교로, 미국의 금 담보율이 아닙니다. 채굴량/재고는 연간 생산량 ÷ 연말 추정 재고이며, 역수는 매장량 고갈 기간이 아닙니다.
 
 원천 갱신은 **finance-pi**에서 수행합니다.
 
@@ -104,9 +109,9 @@ cd ../finance-pi
 
 - `?theme=light` / `?theme=dark`: 전달된 테마 우선, 없으면 `localStorage.theme`.
 - `?embed=overview&theme=dark`: 헤더·breadcrumb·footer를 숨긴 화면.
-- `#gold-history`, `#comparison`, `#ratios`, `#supply`, `#reserves`, `#investing`, `#etfs`: 섹션 링크.
+- `#market-size`, `#gold-history`, `#comparison`, `#ratios`, `#supply`, `#reserves`, `#investing`, `#etfs`: 섹션 링크.
 - `config.json`의 프로젝트 키 `allAboutGold`, 데이터 API `/api/gold`.
-- API 외피 `schemaVersion: 1`, `provider: "finance-pi"`, `publishedAt`, `history`, `trends`, `research`.
+- API 외피 `schemaVersion: 1`, `provider: "finance-pi"`, `publishedAt`, `history`, `trends`, `research`, `marketSize`.
 - 가격 자료 `history.schemaVersion: 2`, 자산별 `points: [{date: "YYYY-MM", value: number}]`.
 
 Value Invest의 `allAboutGold` integration과 분석 도구 카드에서 가격·비율·공급·투자 방법으로 연결합니다. 기존 goldGap은 국내외 괴리 비교 기능으로 별도 유지됩니다.
@@ -123,4 +128,4 @@ cd ../finance-pi
 .venv/bin/pytest tests/unit/test_gold_sources.py tests/unit/test_gold_research.py tests/unit/test_admin.py
 ```
 
-계산·결측값·단위 변환·갱신 실패 보존·프록시 및 인증을 검사합니다. 브라우저 검증은 단일 API 경로, 6개 차트, 기간·로그 축·필터·CSV·키보드 조회, 모바일 넘침, 테마·임베드, API 실패·재시도를 확인합니다. 스크린샷은 `artifacts/`에 저장합니다.
+계산·결측값·단위 변환·갱신 실패 보존·프록시 및 인증을 검사합니다. 브라우저 검증은 단일 API 경로, 10개 차트, 기간·로그 축·필터·CSV·키보드 조회, 모바일 넘침, 테마·임베드, API 실패·재시도를 확인합니다. 스크린샷은 `artifacts/`에 저장합니다.

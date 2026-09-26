@@ -25,6 +25,7 @@ async function loadResearch() {
   try {
     const snapshot=await GoldData.load();
     research=snapshot.research;trends=snapshot.trends;
+    GoldMarketSize.render(snapshot.marketSize);
     const last = research.supply.rows.at(-1), prev=research.supply.rows.at(-2);
     $('supply-summary').innerHTML = [['신규 채굴량','mining'],['재활용 공급','recycled'],['순생산자 헤징','hedging'],['총공급','total']].map(([name,key])=>`<div><span>${name} · ${last.year}</span><strong>${format(last[key],1)}<small> t</small></strong><p>${key==='hedging'?'생산자 선도매도 등의 순변화':`전년 대비 ${pct((last[key]/prev[key]-1)*100)}`}</p></div>`).join('');
     renderMining();renderReserves();renderEtfs();
@@ -32,6 +33,7 @@ async function loadResearch() {
     renderMiningTrend();renderReserveTrend();
     $('research-status').textContent=`자료 검토 ${research.reviewedAt} · 발표 자료를 바탕으로 관리하는 스냅샷이며 자동 실시간 갱신되지 않습니다.`;
   } catch(error) {
+    GoldMarketSize.fail();
     $('research-status').textContent='finance-pi의 공급·보유량·ETF 자료를 불러오지 못했습니다. ';
     const b=document.createElement('button');b.textContent='다시 시도';b.onclick=loadResearch;$('research-status').append(b);
   }

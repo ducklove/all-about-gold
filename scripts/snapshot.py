@@ -39,8 +39,48 @@ def validate(snapshot):
     for key in ('supply', 'mining', 'reserves', 'etfs', 'reviewedAt'):
         if not snapshot['research'].get(key):
             raise ValueError('Incomplete reviewed research')
+    validate_market_size(snapshot)
     return snapshot
 
 
 def read(path):
     return validate(json.loads(Path(path).read_text(encoding='utf-8')))
+
+
+def validate_market_size(snapshot):
+    market = snapshot.get('marketSize')
+    if not market or market.get('schemaVersion') != 1:
+        raise ValueError('Missing market-size research')
+    keys = ('stock', 'mining', 'marketCap', 'usDebt', 'goldDebtRatioPct',
+            'miningStockRatioPct', 'stockToFlowYears')
+    maps = {}
+    for key in keys:
+        points = market.get(key, [])
+        dates = [p['date'] for p in points]
+        if len(points) < 20 or dates != sorted(set(dates)):
+            raise ValueError('Incomplete annual market-size observations')
+        for point in points:
+            datetime.strptime(point['date'], '%Y-%m')
+            if (not point['date'].endswith('-12') or not math.isfinite(point['value'])
+                    or point['value'] <= 0):
+                raise ValueError('Invalid annual market-size observation')
+        maps[key] = {p['date']: p['value'] for p in points}
+    prices = next(a for a in snapshot['history']['assets'] if a['id'] == 'gold')
+    prices = {p['date']: p['value'] for p in prices['points']}
+    anchor = market['inputs']['stockAnchor']
+    if maps['stock'].get(str(anchor['year'])+'-12') != anchor['tonnes']:
+        raise ValueError('Invalid stock anchor')
+    if set(maps['goldDebtRatioPct']) != set(maps['marketCap']) & set(maps['usDebt']):
+        raise ValueError('Gold/debt dates must intersect')
+    for date, cap in maps['marketCap'].items():
+        expected = maps['stock'][date] * 1_000_000 / 31.1034768 * prices[date]
+        if not math.isclose(cap, expected, rel_tol=1e-8):
+            raise ValueError('Incorrect gold value conversion')
+    for date, ratio in maps['goldDebtRatioPct'].items():
+        if not math.isclose(ratio, maps['marketCap'][date] / maps['usDebt'][date] * 100, rel_tol=1e-8):
+            raise ValueError('Incorrect gold/debt ratio')
+    for date, ratio in maps['miningStockRatioPct'].items():
+        if not math.isclose(ratio, maps['mining'][date] / maps['stock'][date] * 100, rel_tol=1e-8):
+            raise ValueError('Incorrect mining/stock ratio')
+        if not math.isclose(maps['stockToFlowYears'][date] * ratio, 100, rel_tol=1e-8):
+            raise ValueError('Incorrect stock/flow inverse')

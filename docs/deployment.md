@@ -48,3 +48,5 @@ Pi 수집 실패는 systemd 실패 상태와 전용 publish.log에 남고 기존
 - `finance-pi/src/finance_pi/sources/gold/seed_research.py`의 수동 자료는 공식 발표를 검토한 다음 변경·실행하고 새 스냅샷을 발행합니다.
 - 세계은행 XLSX 및 USGS 판본 URL이 바뀌면 finance-pi에서 새 자료의 단위와 정의를 확인하고 갱신합니다. 공개 사이트에서 임의의 원천으로 우회하지 않습니다.
 - Pages 배포본에는 index, static, config, 검증된 스냅샷만 포함됩니다. 서버 스크립트·키·로그·원천 점검 파일은 포함하지 않습니다.
+
+- 시장 규모 모델의 `finance-pi/src/finance_pi/sources/gold/market_size_inputs.json`은 매년 WGC 연말 지상재고와 USGS 신규 연간 채굴량 발표를 검토하여 기준 연도·수치·출처를 함께 갱신합니다. 재무부 잔액은 자동 수집하지만 금 재고 기준은 자동 추측하지 않습니다. 화면의 방법론 설명도 새 기준 연도와 일치시킵니다. 신규 필드 배포는 finance-pi 수집·발행을 먼저 완료하고 소비자 코드를 배포합니다.

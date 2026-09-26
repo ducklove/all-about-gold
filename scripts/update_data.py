@@ -16,10 +16,11 @@ def main():
         raise ValueError('Unexpected provider')
     root = Path(__file__).resolve().parents[1] / 'data'
     root.mkdir(exist_ok=True)
-    for key in ('history', 'trends', 'research'):
-        temp = root / (key + '.tmp')
+    for key, name in [('history', 'history'), ('trends', 'trends'),
+                      ('research', 'research'), ('marketSize', 'market_size')]:
+        temp = root / (name + '.tmp')
         temp.write_text(json.dumps(snapshot[key], ensure_ascii=False) + '\n', encoding='utf-8')
-        os.replace(temp, root / (key + '.json'))
+        os.replace(temp, root / (name + '.json'))
     print('Exported finance-pi snapshot', snapshot['publishedAt'])
 
 
