@@ -3,7 +3,7 @@
 ## 최초 배포
 
 1. finance-pi의 금 수집기/API 코드를 배포하고 admin을 재시작합니다. 기존 `ops/deploy.sh`의 테스트·readiness 게이트를 사용합니다.
-2. 이 저장소의 `main` 코드를 Pi의 `~/Works/all-about-gold`에 체크아웃합니다. Pages 설정은 GitHub Actions를 선택합니다.
+2. 이 저장소의 `main` 코드를 Pi의 `~/Works/all-about-gold`에 체크아웃합니다. Pages 설정은 GitHub Actions를 선택합니다. `github-pages` environment의 배포 허용 브랜치에 **main과 data를 모두 등록**합니다. data push로도 배포하므로 main만 허용하면 자동 갱신 배포가 거절됩니다.
 3. Pi에서 전용 Ed25519 키를 `~/.config/all-about-gold/github_ed25519`에 만들고 공개키만 이 저장소의 write deploy key로 등록합니다. 개인키는 Pi에만 보관합니다.
 4. 같은 폴더의 `publish.env`를 권한 600으로 만들고 서버 경로를 설정합니다.
 
