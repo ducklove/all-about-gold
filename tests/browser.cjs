@@ -44,6 +44,7 @@ const fs = require('node:fs');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  }
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile.png',fullPage:true});
+ await page.goto(base+'/?embed=0&theme=light');await page.waitForSelector('#chart svg');assert.equal(await page.locator('.topbar').isVisible(),true);
  await page.goto(base+'/?embed=overview&theme=light');await page.waitForSelector('#chart svg');assert.equal(await page.locator('.topbar').isVisible(),false);assert.equal(await page.locator('vc-shell').isVisible(),false);
  await page.route('**/'+endpoint,route=>route.fulfill({status:503,body:'Unavailable'}));await page.reload();await page.locator('#status button').waitFor();assert.match(await page.locator('#status').textContent(),/finance-pi/);
  await page.unroute('**/'+endpoint);await page.locator('#status button').click();await page.waitForSelector('#gold-long-chart svg');await page.locator('#research-status button').click();await page.waitForSelector('#reserves-trend svg');

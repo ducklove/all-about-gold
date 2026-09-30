@@ -21,7 +21,10 @@ function syncEcosystemLinks(scope = document) {
 // The inline vc-theme-boot block already applied ?theme / stored / system theme before paint.
 if (!['light', 'dark'].includes(document.documentElement.dataset.theme)) document.documentElement.dataset.theme = currentTheme();
 syncEcosystemLinks();
-if (params.has('embed')) document.body.classList.add('embedded');
+// Embed per the ecosystem deep-link contract: ?embed (any value but 0/false) or ?headless=1,
+// flagged as html[data-embed] by the boot block — the same test vc-shell uses to hide itself.
+const embedParam = params.get('embed');
+if (document.documentElement.hasAttribute('data-embed') || (embedParam !== null && embedParam !== '0' && embedParam !== 'false')) document.body.classList.add('embedded');
 document.addEventListener('vc:themechange', () => syncEcosystemLinks());
 $('theme').onclick = () => {
   const theme = currentTheme() === 'dark' ? 'light' : 'dark';

@@ -86,6 +86,17 @@ class EcosystemShellTests(unittest.TestCase):
         self.assertIn('window.VCShell.setTheme(theme)', app)
         self.assertIn("addEventListener('vc:themechange'", app)
 
+    def test_embed_follows_the_deep_link_contract(self):
+        # ?embed=0 / ?embed=false is not embed mode (same rule as vc-shell and the boot block).
+        app = (ROOT / 'static/js/app.js').read_text(encoding='utf-8')
+        self.assertNotIn("params.has('embed')", app)
+        self.assertIn("hasAttribute('data-embed')", app)
+        self.assertIn("embedParam !== '0' && embedParam !== 'false'", app)
+
+    def test_cross_links_use_the_shared_link_token(self):
+        css = (ROOT / 'static/css/style.css').read_text(encoding='utf-8')
+        self.assertIn('.ecosystem-link{color:var(--vc-link,var(--primary))', css)
+
 
 if __name__ == '__main__':
     unittest.main()
