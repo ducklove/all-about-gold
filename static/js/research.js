@@ -11,11 +11,13 @@ function renderReserves() {
   const rows = research.reserves.filter(r=>r.country.includes(query));
   $('reserve-rows').innerHTML = rows.length ? rows.map(r=>`<tr><td><strong>${escapeText(r.country)}</strong><div class="reserve-institution">${escapeText(r.institution)}</div></td><td>${format(r.tonnes,1)}</td><td>${r.asOf || '기준일 미표기'}${!r.asOf?'<div class="reserve-institution">확인 2026-09-26</div>':''}</td><td><a href="${escapeText(r.source)}" target="_blank" rel="noopener noreferrer" title="${escapeText(r.note||r.institution)}">공식 자료 ↗</a></td></tr>`).join('') : '<tr><td colspan="4">검색한 국가가 없습니다. 수록된 6개국에서 검색하세요.</td></tr>';
 }
+const eiaynHref = ticker => escapeText(`https://ducklove.github.io/eiayn/?code=${encodeURIComponent(String(ticker).trim().toUpperCase())}`);
 function renderEtfs() {
   const market = $('etf-market').value;
   const rows = research.etfs.filter(e=>(etfType==='전체'||e.type===etfType)&&(market==='전체'||e.market===market));
   document.querySelectorAll('[data-type]').forEach(b=>{b.classList.toggle('selected',b.dataset.type===etfType);b.setAttribute('aria-pressed',b.dataset.type===etfType);});
-  $('etf-cards').innerHTML = rows.length ? rows.map(e=>`<article class="etf-card"><div class="etf-top"><strong>${escapeText(e.ticker)}</strong><span>${escapeText(e.type)} · ${e.market}</span></div><h3>${escapeText(e.name)}</h3><div class="etf-exposure">${escapeText(e.exposure)} · ${e.currency}</div><p>${escapeText(e.note)}</p><a href="${escapeText(e.source)}" target="_blank" rel="noopener noreferrer">운용사 / 거래소 자료 ↗</a></article>`).join('') : '<p class="note">선택한 시장·유형의 수록 상품이 없습니다.</p>';
+  $('etf-cards').innerHTML = rows.length ? rows.map(e=>`<article class="etf-card"><div class="etf-top"><strong>${escapeText(e.ticker)}</strong><span>${escapeText(e.type)} · ${e.market}</span></div><h3>${escapeText(e.name)}</h3><div class="etf-exposure">${escapeText(e.exposure)} · ${e.currency}</div><p>${escapeText(e.note)}</p><div class="etf-links"><a href="${escapeText(e.source)}" target="_blank" rel="noopener noreferrer">운용사 / 거래소 자료 ↗</a><a class="ecosystem-link" data-vc-tool="eiayn" data-vc-code="${escapeText(e.ticker)}" href="${eiaynHref(e.ticker)}">ETF 평가 보기 ↗</a></div></article>`).join('') : '<p class="note">선택한 시장·유형의 수록 상품이 없습니다.</p>';
+  syncEcosystemLinks($('etf-cards'));
 }
 $('mining-year').onchange = ()=>{if(research)renderMining();};
 $('country-search').oninput = ()=>{if(research)renderReserves();};

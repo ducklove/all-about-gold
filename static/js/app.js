@@ -5,23 +5,29 @@ const pct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${format(n)}%` : '—'
 const sign = n => n > 0 ? 'up' : n < 0 ? 'down' : '';
 const escapeText = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const params = new URLSearchParams(location.search);
-let storedTheme;
-try { storedTheme = localStorage.getItem('theme'); } catch (_) { /* Storage may be unavailable in an embedded view. */ }
-const requestedTheme = params.get('theme');
-function syncHubLinks() {
-  document.querySelectorAll('.hub-link').forEach(link => {
+const currentTheme = () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+// Ecosystem links carry the effective theme (and `from`) to the hub and sibling tools.
+// The vendored vc-shell builds them from the registry; the static href is the fallback.
+function syncEcosystemLinks(scope = document) {
+  scope.querySelectorAll('a[data-vc-tool]').forEach(link => {
+    const { vcTool: tool, vcCode: code, vcAsset: asset, vcView: view } = link.dataset;
+    const shellHref = window.VCShell && window.VCShell.linkTo(tool, { code, asset, view });
+    if (shellHref) { link.href = shellHref; return; }
     const url = new URL(link.href);
-    url.searchParams.set('theme', document.documentElement.dataset.theme);
+    url.searchParams.set('theme', currentTheme());
     link.href = url.href;
   });
 }
-document.documentElement.dataset.theme = ['light', 'dark'].includes(requestedTheme) ? requestedTheme : (storedTheme === 'dark' ? 'dark' : 'light');
-syncHubLinks();
+// The inline vc-theme-boot block already applied ?theme / stored / system theme before paint.
+if (!['light', 'dark'].includes(document.documentElement.dataset.theme)) document.documentElement.dataset.theme = currentTheme();
+syncEcosystemLinks();
 if (params.has('embed')) document.body.classList.add('embedded');
+document.addEventListener('vc:themechange', () => syncEcosystemLinks());
 $('theme').onclick = () => {
-  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  const theme = currentTheme() === 'dark' ? 'light' : 'dark';
+  if (window.VCShell) { window.VCShell.setTheme(theme); return; }
   document.documentElement.dataset.theme = theme;
-  syncHubLinks();
+  syncEcosystemLinks();
   try { localStorage.setItem('theme', theme); } catch (_) { /* Keep in-memory theme. */ }
 };
 let assets = [], period = 'all', selected = new Set(['gold', 'silver', 'bitcoin', 'dollar']), comparison, cursor = 0;
@@ -95,11 +101,12 @@ async function loadHistory() {
     const data=snapshot.history;
     if (!Array.isArray(data.assets) || data.assets.length !== 5 || data.assets.some(a => !a.points?.length || a.points.some(p=>!Number.isFinite(p.value)||p.value<=0))) throw new Error('Invalid data');
     assets = data.assets; renderCards();render();renderGoldHistory();renderRatios();
-    $('updated').textContent = `발행 ${new Date(snapshot.publishedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} KST · finance-pi`;
+    // Daily runs with identical content are not republished, so publishedAt is the last real change.
+    $('updated').textContent = `자료 발행 ${new Date(snapshot.publishedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} KST · finance-pi`;
+    $('updated').title = '매일 확인하고 내용이 바뀐 날에만 새로 발행합니다.';
     const latest = assets.map(a=>a.points.at(-1).date).sort()[0];
     const age = Date.now() - Date.parse(latest+'-01');
-    const publicationAge = Date.now() - Date.parse(snapshot.publishedAt);
-    $('status').textContent = `${latest}까지의 월평균 가격 · finance-pi 경유 · 실시간 시세가 아닙니다.${publicationAge > 3*86400000 ? ' 발행 후 3일이 지났습니다. 갱신 상태를 확인하세요.' : ''}${age > 100*86400000 ? ' 데이터가 오래되었습니다. 최신 발표를 확인하세요.' : ''}`;
+    $('status').textContent = `${latest}까지의 월평균 가격 · finance-pi 경유 · 실시간 시세가 아닙니다.${age > 100*86400000 ? ' 데이터가 오래되었습니다. 최신 발표와 갱신 상태를 확인하세요.' : ''}`;
   } catch (error) {
     $('status').textContent = 'finance-pi에서 가격 데이터를 불러오지 못했습니다. 발행 데이터와 연결 상태를 확인하세요.';
     const button = document.createElement('button'); button.textContent='다시 시도';button.onclick=loadHistory;$('status').append(' ',button);

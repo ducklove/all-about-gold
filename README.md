@@ -1,6 +1,6 @@
 # All About Gold
 
-Value Invest의 화면·테마 규약을 따르는 금 투자 리서치 서비스입니다. 데이터 공급자는 **finance-pi**입니다. 공개 사이트는 [GitHub Pages](https://ducklove.github.io/all-about-gold/)에서 서비스합니다.
+Value Compass(value-invest) 생태계의 화면·테마 규약을 따르는 금 투자 리서치 서비스입니다. 데이터 공급자는 **finance-pi**입니다. 공개 사이트는 [GitHub Pages](https://ducklove.github.io/all-about-gold/)에서 서비스합니다.
 
 ## 데이터 구조
 
@@ -55,7 +55,8 @@ FINANCE_PI_BASE_URL=http://192.168.68.84:8400 npm start
 - Raspberry Pi의 `all-about-gold-update.timer`가 **매일 07:17 Asia/Seoul**에 `ops/update_pages.py`를 실행합니다. 중단 중 놓친 실행은 기기 재시작 후 보충합니다.
 - 발행 작업은 finance-pi 수집 명령 → finance-pi API 조회 → 완전성·단위·유효값 검사 → 데이터 브랜치 push 순서입니다. 한 단계라도 실패하면 새 발행을 중단해 기존 공개본을 유지합니다.
 - 가격은 일간 실시간 시세가 아닌 **완료된 월의 평균**입니다. 매일 확인해도 원천 발표가 없으면 최신 관측월은 그대로입니다. 연간 채굴·보유량도 원천 발행 주기를 따릅니다. ETF·투자 제도·최근 개별 보유량 설명은 별도 검토 대상입니다.
-- 화면에 관측월과 발행 시각을 함께 표시하고, 발행 후 3일이 지나면 갱신 상태 안내를 표시합니다.
+- 발행 시각(`publishedAt`)과 실행 시각(`generatedAt`)만 바뀐 실행은 data 브랜치에 커밋하지 않습니다. 따라서 push와 Pages 배포도 일어나지 않습니다(`ops/update_pages.py`의 `stage_publication`). 공개본의 발행 시각은 자료가 마지막으로 바뀐 시각입니다.
+- 화면에 관측월과 발행 시각을 함께 표시합니다. 가장 늦은 자산의 관측월이 100일을 넘으면 갱신 상태 안내를 표시합니다.
 - Pi는 이 저장소에만 쓰기 가능한 전용 SSH deploy key를 사용합니다. 개인 토큰은 Pages나 저장소에 넣지 않습니다.
 
 운영 명령, 장애 확인과 키 설치 방법은 [배포 안내](docs/deployment.md)를 참고하세요. 소스 사이트 장애나 Pages 빌드 실패는 각각 systemd 실행 상태와 [Actions 기록](https://github.com/ducklove/all-about-gold/actions/workflows/pages.yml)에서 확인할 수 있습니다.
@@ -103,18 +104,23 @@ cd ../finance-pi
 
 이 서비스의 `npm run update-data`는 finance-pi의 현재 스냅샷을 `data/*.json`으로 **점검용 내보내기**만 합니다. 화면은 이 파일들을 읽지 않습니다. 수집기·소스 정의·원본 스냅샷은 finance-pi가 관리합니다. 자세한 서버 계약은 [finance-pi 문서](../finance-pi/docs/gold-research.md)를 참고하세요.
 
-## Value Invest 연동
+## Value Compass 연동
 
-`../value-invest/docs/linked-projects.md`의 독립 배포 원칙과 표면·브랜드·상승/하락 색상, 시스템 한글 폰트, classic defer script 구조를 따릅니다. 본체에 런타임 의존하지 않습니다. 상단·하단의 Value Invest 링크로 허브에 돌아갈 수 있습니다.
+`../value-invest/docs/linked-projects.md`의 독립 배포 원칙과 표면·브랜드·상승/하락 색상, 시스템 한글 폰트, classic defer script 구조를 따릅니다. 본체에 런타임 의존하지 않습니다.
 
-- `?theme=light` / `?theme=dark`: 전달된 테마 우선, 없으면 `localStorage.theme`.
-- `?embed=overview&theme=dark`: 헤더·breadcrumb·footer를 숨긴 화면.
+- **에코시스템 바**: `<body>` 맨 위의 `<vc-shell tool="all-about-gold">`가 허브·도구 전환·테마를 제공합니다. JS가 없으면 안쪽의 `Value Compass ↗` 링크가 그대로 보입니다. 하단 푸터에도 허브 링크가 있습니다.
+- **공용 자산**: `static/vc-shell.js`, `static/vc-tokens.css`, `scripts/vc_publish.py`와 `index.html`의 `<!-- vc:theme-boot -->` 블록은 value-invest가 정본입니다. 직접 고치지 말고 value-invest에서 `node scripts/sync-ecosystem.mjs --write --only all-about-gold`로 다시 복사합니다.
+- **색상**: `--up`/`--down`/`--font`는 `--vc-up`/`--vc-down`/`--vc-font-sans`의 별칭입니다(상승=빨강, 하락=파랑).
+- `?theme=light` / `?theme=dark`: 칠하기 전에 적용하고 저장하지 않습니다. 없으면 공용 `localStorage.theme`, 그다음 OS 설정(`prefers-color-scheme`)을 따릅니다. 테마 버튼은 `VCShell.setTheme()`으로 저장합니다.
+- `?embed=overview&theme=dark`(`0`/`false`가 아닌 값): 에코시스템 바·헤더·breadcrumb·footer를 숨긴 화면.
 - `#market-size`, `#gold-history`, `#comparison`, `#ratios`, `#supply`, `#reserves`, `#investing`, `#etfs`: 섹션 링크.
+- **도구 간 링크**: ETF 카드 → ETF 평가(eiayn) `?code=<티커>`, KRX 금현물 조건 문단 → 김치프리미엄(gold_gap) `?asset=gold`. 링크에는 현재 테마와 `from=all-about-gold`가 붙습니다.
 - `config.json`의 프로젝트 키 `allAboutGold`, 데이터 API `/api/gold`.
 - API 외피 `schemaVersion: 1`, `provider: "finance-pi"`, `publishedAt`, `history`, `trends`, `research`, `marketSize`.
 - 가격 자료 `history.schemaVersion: 2`, 자산별 `points: [{date: "YYYY-MM", value: number}]`.
+- **허브 요약**: Pages 빌드(`scripts/build_pages.py`)가 `summary.json`과 `version.json`을 사이트 루트에 만듭니다(value-invest `docs/ecosystem/data-contract.md` §6.9). `asOf`와 `generatedAt`은 finance-pi `publishedAt`이므로 같은 발행본이면 같은 파일이 나옵니다. `data/summary.json`은 커밋된 점검용 사본입니다. `python3 scripts/summary.py --from-exports data --output data`로 네트워크 없이 다시 만들 수 있습니다.
 
-Value Invest의 `allAboutGold` integration과 분석 도구 카드에서 가격·비율·공급·투자 방법으로 연결합니다. 기존 goldGap은 국내외 괴리 비교 기능으로 별도 유지됩니다.
+Value Compass의 `allAboutGold` integration과 분석 도구 카드에서 가격·비율·공급·투자 방법으로 연결합니다. 기존 goldGap은 국내외 괴리 비교 기능으로 별도 유지됩니다.
 
 ## 검증
 

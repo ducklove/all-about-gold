@@ -4,6 +4,11 @@ import os
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+try:
+    from . import summary
+except ImportError:
+    import summary
+
 
 def main():
     base = os.environ.get('FINANCE_PI_BASE_URL', 'http://127.0.0.1:8401').rstrip('/')
@@ -21,6 +26,8 @@ def main():
         temp = root / (name + '.tmp')
         temp.write_text(json.dumps(snapshot[key], ensure_ascii=False) + '\n', encoding='utf-8')
         os.replace(temp, root / (name + '.json'))
+    # Same summary the Pages build publishes, kept next to the exports for inspection.
+    summary.publish(snapshot, root)
     print('Exported finance-pi snapshot', snapshot['publishedAt'])
 
 
