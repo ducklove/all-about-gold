@@ -104,21 +104,22 @@ cd ../finance-pi
 
 이 서비스의 `npm run update-data`는 finance-pi의 현재 스냅샷을 `data/*.json`으로 **점검용 내보내기**만 합니다. 화면은 이 파일들을 읽지 않습니다. 수집기·소스 정의·원본 스냅샷은 finance-pi가 관리합니다. 자세한 서버 계약은 [finance-pi 문서](../finance-pi/docs/gold-research.md)를 참고하세요.
 
-## Value Compass 연동
+## Value Compass 생태계 연동
 
-`../value-invest/docs/linked-projects.md`의 독립 배포 원칙과 표면·브랜드·상승/하락 색상, 시스템 한글 폰트, classic defer script 구조를 따릅니다. 본체에 런타임 의존하지 않습니다.
+[Value Compass](https://ducklove.duckdns.org:3691) 허브 생태계의 한 도구입니다. `../value-invest/docs/linked-projects.md`의 독립 배포 원칙과 표면·브랜드·상승/하락 색상, 시스템 한글 폰트, classic defer script 구조를 따르며 허브에 런타임 의존하지 않습니다.
 
+- **레지스트리 id**: `all-about-gold` (integration key `allAboutGold`, 정본: value-invest [`config/ecosystem.json`](https://github.com/ducklove/value-invest/blob/master/config/ecosystem.json)). 이 저장소의 `config.json`도 같은 프로젝트 키와 데이터 API `/api/gold`를 적어 둡니다.
 - **에코시스템 바**: `<body>` 맨 위의 `<vc-shell tool="all-about-gold">`가 허브·도구 전환·테마를 제공합니다. JS가 없으면 안쪽의 `Value Compass ↗` 링크가 그대로 보입니다. 하단 푸터에도 허브 링크가 있습니다.
-- **공용 자산**: `static/vc-shell.js`, `static/vc-tokens.css`, `scripts/vc_publish.py`와 `index.html`의 `<!-- vc:theme-boot -->` 블록은 value-invest가 정본입니다. 직접 고치지 말고 value-invest에서 `node scripts/sync-ecosystem.mjs --write --only all-about-gold`로 다시 복사합니다.
+- **벤더링 파일 (직접 수정 금지)**: `static/vc-shell.js`, `static/vc-tokens.css`, `scripts/vc_publish.py`와 `index.html`의 `<!-- vc:theme-boot -->` 블록은 value-invest가 정본입니다. 허브에서 고친 뒤 `node ../value-invest/scripts/sync-ecosystem.mjs --write --only all-about-gold`로 다시 복사합니다.
 - **색상**: `--up`/`--down`/`--font`는 `--vc-up`/`--vc-down`/`--vc-font-sans`의 별칭입니다(상승=빨강, 하락=파랑).
-- `?theme=light` / `?theme=dark`: 칠하기 전에 적용하고 저장하지 않습니다. 없으면 공용 `localStorage.theme`, 그다음 OS 설정(`prefers-color-scheme`)을 따릅니다. 테마 버튼은 `VCShell.setTheme()`으로 저장합니다.
-- `?embed=overview&theme=dark`(`0`/`false`가 아닌 값): 에코시스템 바·헤더·breadcrumb·footer를 숨긴 화면.
-- `#market-size`, `#gold-history`, `#comparison`, `#ratios`, `#supply`, `#reserves`, `#investing`, `#etfs`: 섹션 링크.
+- **인바운드 딥링크** (허브 `viewLink` `#{view}`, `embed` `?embed=1`):
+  - `?theme=light|dark`: 칠하기 전에 적용하고 저장하지 않습니다. 없으면 공용 `localStorage.theme`, 그다음 OS 설정을 따릅니다. 테마 버튼은 `VCShell.setTheme()`으로 저장합니다.
+  - `?embed`(`0`/`false`가 아닌 값) 또는 `?headless=1`: 에코시스템 바·헤더·breadcrumb·footer를 숨긴 화면.
+  - `#overview`, `#gold-history`, `#market-size`, `#comparison`, `#ratios`, `#supply`, `#reserves`, `#investing`, `#etfs`: 섹션 링크.
 - **도구 간 링크**: ETF 카드 → ETF 평가(eiayn) `?code=<티커>`, KRX 금현물 조건 문단 → 김치프리미엄(gold_gap) `?asset=gold`. 링크에는 현재 테마와 `from=all-about-gold`가 붙습니다.
-- `config.json`의 프로젝트 키 `allAboutGold`, 데이터 API `/api/gold`.
-- API 외피 `schemaVersion: 1`, `provider: "finance-pi"`, `publishedAt`, `history`, `trends`, `research`, `marketSize`.
-- 가격 자료 `history.schemaVersion: 2`, 자산별 `points: [{date: "YYYY-MM", value: number}]`.
-- **허브 요약**: Pages 빌드(`scripts/build_pages.py`)가 `summary.json`과 `version.json`을 사이트 루트에 만듭니다(value-invest `docs/ecosystem/data-contract.md` §6.9). `asOf`와 `generatedAt`은 finance-pi `publishedAt`이므로 같은 발행본이면 같은 파일이 나옵니다. `data/summary.json`은 커밋된 점검용 사본입니다. `python3 scripts/summary.py --from-exports data --output data`로 네트워크 없이 다시 만들 수 있습니다.
+- **허브 요약**: Pages 빌드(`scripts/build_pages.py`)가 `summary.json`과 `version.json`을 사이트 루트에 만듭니다(`https://ducklove.github.io/all-about-gold/summary.json`, 계약: [value-invest `docs/ecosystem/data-contract.md`](https://github.com/ducklove/value-invest/blob/master/docs/ecosystem/data-contract.md) §6.9). `asOf`와 `generatedAt`은 finance-pi `publishedAt`이므로 같은 발행본이면 같은 파일이 나옵니다. `data/summary.json`은 커밋된 점검용 사본이며 `python3 scripts/summary.py --from-exports data --output data`로 네트워크 없이 다시 만들 수 있습니다.
+- **데이터 API**: 외피 `schemaVersion: 1`, `provider: "finance-pi"`, `publishedAt`, `history`, `trends`, `research`, `marketSize`. 가격 자료는 `history.schemaVersion: 2`, 자산별 `points: [{date: "YYYY-MM", value: number}]`.
+- **허브·생태계 서비스**: 데이터는 **finance-pi** `GET /api/research/gold` 하나만 씁니다(로컬은 `scripts/serve.py`가 `/api/gold`로 프록시, Pages는 `data/current.json` 발행본). 보유종목 배지(`heldBadges: false`), `/api/internal/notify`, `/api/asset-quotes`, kis-proxy는 쓰지 않습니다.
 
 Value Compass의 `allAboutGold` integration과 분석 도구 카드에서 가격·비율·공급·투자 방법으로 연결합니다. 기존 goldGap은 국내외 괴리 비교 기능으로 별도 유지됩니다.
 
