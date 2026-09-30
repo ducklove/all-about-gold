@@ -13,7 +13,7 @@ const fs = require('node:fs');
  assert.ok(requests.every(u=>u.startsWith(base+'/')));
  assert.match(await page.locator('#range').textContent(),/1960-01/);
  // Value Compass shell and cross-links: one script execution, registry deep links with theme/from.
- assert.equal(await page.evaluate(()=>!!document.querySelector('vc-shell').shadowRoot&&window.VCShell.version),'1.0.0');
+ assert.equal(await page.evaluate(()=>!!document.querySelector('vc-shell').shadowRoot&&window.VCShell.version),'1.1.0');
  assert.equal(await page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').length),await page.evaluate(()=>new Set(performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').map(e=>e.name)).size));
  assert.match(await page.locator('#etf-cards a.ecosystem-link').first().getAttribute('href'),/eiayn\/\?code=411060&theme=(light|dark)&from=all-about-gold$/);
  assert.match(await page.locator('.krx-conditions a.ecosystem-link').getAttribute('href'),/gold_gap\/\?asset=gold&theme=(light|dark)&from=all-about-gold$/);
