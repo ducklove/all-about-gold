@@ -12,6 +12,34 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from snapshot import validate  # noqa: E402
+from summary import fingerprint  # noqa: E402
+
+
+def stage_publication(work, snapshot):
+    """Write the data-branch files into ``work``; return True when the content changed.
+
+    finance-pi stamps publishedAt/generatedAt on every daily run. When everything
+    else is identical the previous current.json is kept byte-for-byte, so the
+    run produces no commit, no push and no Pages deploy (the site keeps showing
+    the publication time of the last real change).
+    """
+    target = work / 'data/current.json'
+    previous = None
+    if target.exists():
+        try:
+            previous = json.loads(target.read_text(encoding='utf-8'))
+        except ValueError:
+            previous = None
+    changed = not isinstance(previous, dict) or fingerprint(previous) != fingerprint(snapshot)
+    if changed:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(snapshot, ensure_ascii=False, allow_nan=False) + '\n', encoding='utf-8')
+    # Push events read workflows from the pushed branch, so data carries the
+    # reviewed Pages workflow too. The workflow always checks out main.
+    workflows = work / '.github/workflows'
+    workflows.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ROOT / '.github/workflows/pages.yml', workflows / 'pages.yml')
+    return changed
 
 
 def run(*args, cwd=None, check=True):
@@ -45,27 +73,21 @@ def main():
             run('git', 'checkout', '-q', '-B', 'data', 'FETCH_HEAD', cwd=work)
         elif exists.returncode != 2:
             raise RuntimeError('Cannot verify remote data branch')
-        (work / 'data').mkdir(exist_ok=True)
-        (work / 'data/current.json').write_text(
-            json.dumps(snapshot, ensure_ascii=False, allow_nan=False) + '\n', encoding='utf-8'
-        )
-        # Push events read workflows from the pushed branch, so data carries the
-        # reviewed Pages workflow too. The workflow always checks out main.
-        workflows = work / '.github/workflows'
-        workflows.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / '.github/workflows/pages.yml', workflows / 'pages.yml')
+        content_changed = stage_publication(work, snapshot)
         run('git', 'config', 'user.name', 'finance-pi publisher', cwd=work)
         run('git', 'config', 'user.email', 'finance-pi@users.noreply.github.com', cwd=work)
         run('git', 'add', 'data/current.json', '.github/workflows/pages.yml', cwd=work)
         changed = run('git', 'diff', '--cached', '--quiet', cwd=work, check=False)
         if changed.returncode == 0:
-            print('Snapshot unchanged')
+            print('Snapshot content unchanged (only run timestamps differ); nothing to publish')
             return
         if changed.returncode != 1:
             raise RuntimeError('Cannot inspect snapshot change')
-        run('git', 'commit', '-q', '-m', 'Publish finance-pi gold snapshot ' + snapshot['publishedAt'], cwd=work)
+        message = ('Publish finance-pi gold snapshot ' + snapshot['publishedAt'] if content_changed
+                   else 'Update Pages workflow on the data branch')
+        run('git', 'commit', '-q', '-m', message, cwd=work)
         run('git', 'push', 'origin', 'HEAD:refs/heads/data', cwd=work)
-    print('Published complete finance-pi snapshot:', snapshot['publishedAt'])
+    print(message + ':', snapshot['publishedAt'] if content_changed else 'snapshot content unchanged')
 
 
 if __name__ == '__main__':

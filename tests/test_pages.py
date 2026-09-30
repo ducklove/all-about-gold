@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts import vc_publish as vp
 from scripts.build_pages import build
 from scripts.snapshot import validate
 
@@ -32,9 +33,23 @@ class PagesTests(unittest.TestCase):
             self.assertIn('content="data/current.json"', html)
             self.assertNotIn('content="/api/gold"', html)
             self.assertEqual({p.name for p in site.iterdir()},
-                             {'index.html', 'static', 'data', 'config.json', '.nojekyll'})
+                             {'index.html', 'static', 'data', 'config.json', '.nojekyll',
+                              'summary.json', 'version.json'})
             self.assertEqual(json.loads((site / 'data/current.json').read_text())['provider'],
                              'finance-pi')
+            # Vendored Value Compass shell assets ship with the static tree.
+            self.assertTrue((site / 'static/vc-shell.js').is_file())
+            self.assertTrue((site / 'static/vc-tokens.css').is_file())
+            envelope = vp.validate_envelope(json.loads((site / 'summary.json').read_text()))
+            self.assertEqual(envelope['tool'], 'all-about-gold')
+            self.assertEqual(envelope['asOf'], '2026-09-26T09:27:46+09:00')
+            self.assertEqual(json.loads((site / 'version.json').read_text())['files'],
+                             {'summary.json': envelope['contentHash']})
+            # Rebuilding the same publication yields byte-identical hub files.
+            before = (site / 'summary.json').read_bytes(), (site / 'version.json').read_bytes()
+            build(snapshot, site)
+            self.assertEqual(((site / 'summary.json').read_bytes(), (site / 'version.json').read_bytes()),
+                             before)
 
     def test_invalid_or_incomplete_generation_is_rejected(self):
         valid = fixture()

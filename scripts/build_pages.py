@@ -5,8 +5,10 @@ import shutil
 from pathlib import Path
 
 try:
+    from . import summary
     from .snapshot import read
 except ImportError:
+    import summary
     from snapshot import read
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +35,8 @@ def build(snapshot_path, output):
     config['dataApi'] = 'data/current.json'
     config['delivery'] = 'published-finance-pi-snapshot'
     (output / 'config.json').write_text(json.dumps(config, indent=2) + '\n')
+    # Value Compass hub card: <site>/summary.json + version.json (data contract §4).
+    summary.publish(snapshot, output)
     (output / '.nojekyll').touch()
     print('Pages artifact:', output, 'finance-pi publication:', snapshot['publishedAt'])
 
